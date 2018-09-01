@@ -46,7 +46,7 @@ router.get('/contact', function(req, res, next) {
 });
 
 router.get('/resume', function(req, res, next) {
-  res.redirect('/manohar-negi-resume.pdf'); 
+  res.redirect('/devika_resume.pdf'); 
 });
 
 router.get('/signin', function(req, res, next) {

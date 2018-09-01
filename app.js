@@ -7,6 +7,7 @@ var hbs = require('hbs');
 var index = require('./routes/index');
 var projects = require('./routes/projects');
 var blog = require('./routes/blog');
+var admin = require('./routes/admin');
 
 var app = express();
 var auth = require('./middleware/auth');
@@ -36,7 +37,7 @@ app.use(auth.authenticated);
 app.use('/', index);
 app.use('/projects', projects);
 app.use('/blog', blog);
-
+app.use('/admin', admin);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
