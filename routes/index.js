@@ -1,6 +1,8 @@
 var express = require('express');
 var md5 = require('js-md5');
 var router = express.Router();
+var Client = require('node-rest-client').Client;
+var client = new Client();
 
 // function checkUser(userid, password, callback){
 //   var collection = db.collection('users');
@@ -24,12 +26,23 @@ router.get('/contact', function(req, res, next) {
   res.render('contact', { title: 'Contact', showFooter: true, navContact: true });
 });
 
-router.post('/contact', function(req, res, next) {
+ router.post('/contact', function(req, res, next) {
   // read the values passed from the ui
   var data = req.body;
   console.log(JSON.stringify(data));
-
-  res.render('confirm', { title: 'Contact', showFooter: true, navContact: true, data: data });
+  var args = {
+    data: req.body,
+    headers: { "Content-Type": "application/json" }
+};
+  client.post("http://localhost:3030/contact", args, 
+        function (jsonData, response) {
+            // parsed response body as js object
+            console.log(jsonData);
+            // raw response
+            // console.log(response);
+            res.render('confirm', { title: 'Contact', showFooter: true, navContact: true, data: data });
+        });
+  
 });
 
 router.get('/resume', function(req, res, next) {
@@ -113,5 +126,6 @@ router.get('/signin', function(req, res, next) {
 //   delete req.session.user;
 //   res.redirect('/signin'); 
 // });
+
 
 module.exports = router;
