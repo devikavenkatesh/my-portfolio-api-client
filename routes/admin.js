@@ -2,6 +2,9 @@ var express = require('express');
 var router = express.Router();
 var Client = require('node-rest-client').Client;
 var client = new Client();
+var mediaService = require('../service/mediaService');
+var path = require('path');
+var fs = require('fs');
 
 router.get('/', function (req, res, next) {
   res.render('admin/dashboard', { 
@@ -37,14 +40,14 @@ router.get('/projects/create', function (req, res, next) {
 
 router.post('/projects/create', function (req, res, next) {
   var data = req.body;
-  console.log(JSON.stringify(data));
+  //console.log(JSON.stringify(data));
   var args = {
       data: req.body,
       headers: { "Content-Type": "application/json" }
   };
   client.post("http://localhost:3030/projects", args, function (jsonData, response) {
           // parsed response body as js object
-          console.log(jsonData);
+          //console.log(jsonData);
           // raw response
           // console.log(response);
           res.redirect('/admin/projects');
@@ -76,11 +79,11 @@ router.post('/projects/:projectAlias/update', function (req, res) {
       headers: { "Content-Type": "application/json" }
   };
   var pAlias = req.params.projectAlias;
-  console.log("update" + pAlias);
+  //console.log("update" + pAlias);
   client.put("http://localhost:3030/projects/"+ pAlias, args,
       function (jsonData, response) {
           // parsed response body as js object
-          console.log(jsonData);
+          //console.log(jsonData);
           // raw response
           // console.log(response);
 
@@ -89,49 +92,106 @@ router.post('/projects/:projectAlias/update', function (req, res) {
 
 });
 
-/*
+router.get('/projects/:projectAlias/delete', function (req, res) {
+  //var data = req.body;
+// console.log(JSON.stringify(data));
+ var args = {
+     headers: { "Content-Type": "application/json" }
+ };
+ var pAlias = req.params.projectAlias;
+ //console.log(pAlias);
+ //console.log("update" + pAlias);
+ client.delete("http://localhost:3030/projects/"+ pAlias, args,
+     function (jsonData, response) {
+         // parsed response body as js object
+         console.log(jsonData);
+         // raw response
+         // console.log(response);
+         res.redirect('/admin/projects');
+     });
 
+});
 
-
-
-router.get('/media', function (req, res) {
+router.get('/projects/:projectAlias/upload', function (req, res) {
+  var pAlias = req.params.projectAlias;
   res.render('admin/upload', { 
     layout: 'layout-admin', 
-    title: 'Image Upload',
-    navProjects: true
+    title: 'Upload Cover Image',
+    navProjects: true,
+    actionUrl: '/admin/projects/'+ pAlias+ '/upload'
   });
 });
 
-router.post('/media', function (req, res) {
-  upload(req, res, function (err) {
-    console.log(err);
-
-    if (err) {
-      return res.end("Error uploading file.");
+router.post('/projects/:projectAlias/upload', function (req, res, next) {
+  var pAlias = req.params.projectAlias;
+  var dir = path.join(__dirname, '../public/images/projects');
+  var finishUpload = function (err, data){
+    if(err){
+      //throw new Error('errro...');
+      console.log(err)
+      res.render('404');
+    }else{
+      res.redirect('/admin/projects/' + pAlias);
     }
-    res.end("File is uploaded");
-  });
-});
+  };
 
-router.get('/projects/:projectAlias', function (req, res, next) {
-    function projectDetails(error, data){
-      res.render('admin/project-detail', { 
-        layout: 'layout-admin', 
-        title: data[0].name,
-        navProjects: true,
-        project: data[0]
+  var callback = function(error, data){
+    if(error){
+      console.log(error);
+    }else{
+      //projectService.update(pAlias, { image: '/images/projects/'+ pAlias + '.png'}, finishUpload);
+      var args = {
+        data: { image: '/images/projects/'+ pAlias + '.png'},
+        headers: { "Content-Type": "application/json" }
+    };
+    client.put("http://localhost:3030/projects/"+ pAlias, args,
+      function (jsonData, response) {
+          // parsed response body as js object
+          //console.log(jsonData);
+          // raw response
+          // console.log(response);
+
+          res.redirect('/admin/projects/'+ pAlias);
       });
+ 
     }
-    getProject(req.params.projectAlias, projectDetails);
-  });
+  };  
+  mediaService.uploadMedia(req, res, dir, pAlias + '.png', callback);
+});
 
 router.get('/blog', function (req, res, next) {
-  res.render('admin/blog', { 
-    layout: 'layout-admin', 
-    title: 'Blog Admin',
-    navBlog: true,
-    blogs: getBlog()  
-  });
+  client.get("http://localhost:3030/blog", function (jsonData, response) {
+        // parsed response body as js object
+        console.log(jsonData.data);
+        // raw response
+        // console.log(response);
+        var random = Math.floor(Math.random() * jsonData.data.length);
+        res.render('blog', { 
+            title: 'Blog', 
+            navBlog: true, 
+            showFooter: true, 
+            extraCss: ['/css/blog.css'],
+            categories: jsonData.categories,
+            featuredBlog: jsonData.data[random] ,
+            blog: jsonData.data
+        });  
+      });
+});
+
+/*
+router.get('/blog/:blogAlias', function (req, res, next) {
+  client.get("http://localhost:3030/blog/"+ req.params.blogAlias, function (jsonData, response) {
+      // parsed response body as js object
+      console.log(jsonData.data); 
+      res.render('blog-detail', { 
+          title: jsonData.data.name ,
+          navBlog: true, 
+          showFooter: true, 
+          extraCss: ['/css/blog.css'],
+          blog:  jsonData.data,
+          categories: null //blogCategoriesData
+          });
+      });
 });
 */
 module.exports = router;
