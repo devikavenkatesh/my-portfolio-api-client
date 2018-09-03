@@ -52,16 +52,19 @@ router.get('/:projectAlias', function (req, res, next) {
 
 
   
-// router.get('/:projectAlias/demo', function (req, res, next) {
-//     function renderDemo(error, project){  
-//         console.log(project);
-//         res.render('demo', { 
-//             layout: 'layout-demo',
-//             title: project.name,
-//             project: project
-//         });
-//     };
-//     projectService.getProjectByAlias(req.params.projectAlias, renderDemo);
-// });
+router.get('/:projectAlias/demo', function (req, res, next) {
+    client.get("http://localhost:3030/projects/"+ req.params.projectAlias, 
+    function (jsonData, response) {
+        // parsed response body as js object
+//        console.log(jsonData);
+        // raw response
+        // console.log(response);
+        res.render('demo', { 
+            layout: 'layout-demo',
+            title: jsonData.data.name,
+            project: jsonData.data
+        });
+    });
+});
 
 module.exports = router;
